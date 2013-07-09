@@ -20,31 +20,51 @@ describe BaseListener::Listener do
   let(:listener)   { BaseListener::Listener.new 'test-appid' }
   let(:connection) { MockBunny.new }
   let(:payload)    { { worker: 'TestWorkers::ThisWorker', message: 'message' } }
+  let(:logger)     { MockLogger.new }
 
-  before { Bunny.stub new: connection }
+  before :each do
+    Bunny.stub new: connection
+    BaseListener::Logger.stub new: logger
+  end
 
   describe 'initialize' do
     context 'sets' do
       it 'appid' do
         listener.appid.should == 'test-appid'
       end
+
+      it 'logger' do
+        listener.logger.should == logger
+      end
+    end
+
+    it 'log info about initialization' do
+      listener
+      logger.infos.should include('Initialize new BaseListener::Listener with appid = test-appid')
     end
   end
 
   describe '#connection' do
     it 'initialize bunny with correct params' do
-      Bunny.should_receive(:new).with BaseListener::Config.connection_params
+      Bunny.should_receive(:new).with(BaseListener::Config.connection_params).and_return(connection)
       listener.__send__ :connection
     end
 
     it 'starts connection' do
-      connection.should_receive(:start)
+      connection.should_receive(:start).and_return(connection)
       listener.__send__ :connection
     end
 
     it 'writes connection to @connection' do
       listener.__send__ :connection
       listener.instance_variable_get('@connection').should == connection
+    end
+
+    it 'logs info about new connection' do
+      listener.__send__ :connection
+      logger.infos.should include(
+        "New RabbitMQ connection initialized with host #{connection.host}:#{connection.port} and status #{connection.status}"
+      )
     end
   end
 
@@ -122,6 +142,11 @@ describe BaseListener::Listener do
 
         listener.__send__ :requeue, payload
       end
+
+      it 'warns about requeue' do
+        listener.__send__ :requeue, payload
+        logger.warns.should include("requeue message with payload: #{payload.inspect}")
+      end
     end
 
     context 'when requeue not first time' do
@@ -134,12 +159,24 @@ describe BaseListener::Listener do
 
           listener.__send__ :requeue, payload.merge(requeue_tries: 3)
         end
+
+        it 'warns about requeue' do
+          p = payload.merge requeue_tries: 3
+          listener.__send__ :requeue, p
+          logger.warns.should include("requeue message with payload: #{p}")
+        end
       end
 
       context 'when requeue_tries is more then max_requeue_tries' do
         it 'doesnt publish payload to exchange' do
           listener.__send__(:exchange).should_not_receive :publish
           listener.__send__ :requeue, payload.merge(requeue_tries: 4)
+        end
+
+        it 'errors about message cant be requeued anymore' do
+          p = payload.merge requeue_tries: 4
+          listener.__send__ :requeue, p
+          logger.errors.should include("message with payload: #{p.inspect} can't be requeued anymore")
         end
       end
     end
@@ -162,6 +199,11 @@ describe BaseListener::Listener do
 
     it 'subscribes to queue with correct params' do
       queue.should_receive(:subscribe).with block: true
+    end
+
+    it 'infos about new message' do
+      listener.subscribe!
+      logger.infos.should include("Message with payload: #{payload.inspect} received")
     end
 
     it 'calls for worker_for' do

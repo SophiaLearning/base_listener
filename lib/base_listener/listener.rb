@@ -1,10 +1,12 @@
 module BaseListener
   class Listener
     INTERFACE = %w(queue routing_key)
-    attr_reader :appid
+    attr_reader :appid, :logger
 
     def initialize(appid)
       @appid = appid
+      @logger = Logger.new appid
+      logger.info "Initialize new #{self.class.name} with appid = #{appid}"
     end
 
     def subscribe!
@@ -16,6 +18,7 @@ module BaseListener
     private
 
     def perform(info, meta, payload)
+      logger.info "Message with payload: #{payload.inspect} received"
       requeue_if_needed(payload) { worker_for(payload).perform }
     end
 
@@ -29,7 +32,10 @@ module BaseListener
       payload[:requeue_tries] ||= 0
       if payload[:requeue_tries] <=  max_requeue_tries
         payload[:requeue_tries] +=  1
+        logger.warn "requeue message with payload: #{payload.inspect}"
         exchange.publish Marshal.dump(payload), routing_key: "#{Config.prefix}routing_keys.retry.#{appid}", persisted: true
+      else
+        logger.error "message with payload: #{payload.inspect} can't be requeued anymore"
       end
     end
 
@@ -46,7 +52,9 @@ module BaseListener
     end
 
     def connection
-      @connection ||= Bunny.new(Config.connection_params).start
+      @connection ||= Bunny.new(Config.connection_params).start.tap do |c|
+        logger.info "New RabbitMQ connection initialized with host #{c.host}:#{c.port} and status #{c.status}"
+      end
     end
 
     def channel

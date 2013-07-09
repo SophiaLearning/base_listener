@@ -21,4 +21,16 @@ class MockBunny
   end
 
   alias channel create_channel
+
+  def port
+    PARAMS[:port]
+  end
+
+  def host
+    PARAMS[:host]
+  end
+
+  def status
+    :open
+  end
 end
