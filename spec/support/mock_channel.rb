@@ -1,5 +1,11 @@
 class MockChannel
   def direct(*args)
-    'direct exchange'
+    @exchange ||= MockExchange.new
+  end
+
+  alias exchange direct
+
+  def queue(*args)
+    @queue ||= MockQueue.new
   end
 end

@@ -9,11 +9,15 @@ module BaseListener
 
     def subscribe!
       queue.bind(exchange, routing_key: routing_key).subscribe(block: true) do |info, meta, payload|
-        requeue_if_needed(payload) { worker_for(payload).perform }
+        perform info, meta, Marshal.load(payload)
       end
     end
 
     private
+
+    def perform(info, meta, payload)
+      requeue_if_needed(payload) { worker_for(payload).perform }
+    end
 
     def worker_for(payload)
       payload[:worker].split('::').inject Object do |namespace, name|
@@ -21,7 +25,16 @@ module BaseListener
       end.new payload[:message]
     end
 
-    def requeue
+    def requeue(payload)
+      payload[:requeue_tries] ||= 0
+      if payload[:requeue_tries] <=  max_requeue_tries
+        payload[:requeue_tries] +=  1
+        exchange.publish Marshal.dump(payload), routing_key: "#{Config.prefix}routing_keys.retry.#{appid}", persisted: true
+      end
+    end
+
+    def max_requeue_tries
+      3
     end
 
     def requeue_if_needed(payload)

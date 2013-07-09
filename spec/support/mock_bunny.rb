@@ -19,4 +19,6 @@ class MockBunny
   def create_channel
     @channel ||= MockChannel.new
   end
+
+  alias channel create_channel
 end
