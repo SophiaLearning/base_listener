@@ -5,8 +5,8 @@ module BaseListener
 
     def initialize(appid)
       @appid = appid
-      @logger = Logger.new appid
-      logger.info "Initialize new #{self.class.name} with appid = #{appid}"
+      @logger = Logger.new self
+      logger.info "Initialize new #{log_name} with appid = #{appid}"
     end
 
     def subscribe!
@@ -15,11 +15,15 @@ module BaseListener
       end
     end
 
+    def log_name
+      self.class.name
+    end
+
     private
 
     def perform(info, meta, payload)
       logger.info "Message with payload: #{payload.inspect} received"
-      requeue_if_needed(payload) { worker_for(payload).perform }
+      requeue_if_needed(payload) { handle_errors { worker_for(payload).perform } }
     end
 
     def worker_for(payload)
@@ -63,6 +67,14 @@ module BaseListener
 
     def exchange
       @exchange ||= channel.direct "#{Config.prefix}exchange", durable: true
+    end
+
+    def handle_errors
+      yield
+    rescue => e
+      Config.handler.handle e, self.class.name
+      logger.error e.message
+      false
     end
   end
 end

@@ -7,12 +7,15 @@ class ThatWorker
   end
 
   def perform
-    true
+    raise 'message'
   end
 end
 
 module TestWorkers
   class ThisWorker < ThatWorker
+    def perform
+      true
+    end
   end
 end
 
@@ -217,6 +220,32 @@ describe BaseListener::Listener do
     it 'requeues payload if worker returns false' do
       TestWorkers::ThisWorker.any_instance.should_receive(:perform).and_return false
       listener.should_receive(:requeue).with payload
+    end
+
+    context 'when error happens' do
+      before :each do
+        queue.payload = payload.merge worker: 'ThatWorker'
+      end
+
+      it 'wont rise' do
+        expect { listener.subscribe! }.to_not raise_error
+      end
+
+      it 'handle it' do
+        BaseListener::Handler.any_instance.should_receive(:handle).with do |error, name|
+          error.should be_a(RuntimeError)
+          name.should == 'BaseListener::Listener'
+        end
+      end
+
+      it 'errors the error' do
+        listener.subscribe!
+        logger.errors.should include('message')
+      end
+
+      it 'requeue the error' do
+        listener.should_receive(:requeue).with payload.merge(worker: 'ThatWorker')
+      end
     end
   end
 end

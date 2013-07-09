@@ -10,7 +10,7 @@ module BaseListener
     private
 
     def init_log4r
-      Log4r::Logger.new(logged_object.class.name).tap do |logger|
+      Log4r::Logger.new(logged_object.log_name).tap do |logger|
         logger.outputters << Log4r::Outputter.stdout
         logger.outputters << rolling_file_outputter unless Config.log_path.nil?
         logger.level     =  Log4r::DEBUG
@@ -19,9 +19,9 @@ module BaseListener
 
     def rolling_file_outputter
       Log4r::RollingFileOutputter.new(
-        logged_object.class.to_s,
+        logged_object.log_name,
         maxsize: 1024*1024*5,
-        filename: File.join(Config.log_path, "#{@logged_object.class.to_s.underscore}.#{Process.pid}..log")
+        filename: File.join(Config.log_path, "#{logged_object.log_name.underscore}.#{Process.pid}..log")
       )
     end
 
