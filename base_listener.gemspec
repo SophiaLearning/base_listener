@@ -22,6 +22,6 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rake"
   spec.add_development_dependency "rspec"
   spec.add_development_dependency "pry"
-  spec.add_development_dependency "bunny", ">= 0.9.0.pre6"
+  spec.add_development_dependency "bunny", ">= 0.9.0.rc2"
   spec.add_development_dependency "log4r", ">= 1.1.10"
 end

@@ -20,11 +20,11 @@ module BaseListener
     private
 
     def queue
-      channel.queue "sophia.workerer.queues.retry.#{appid}", exclusive: false, durable: true
+      channel.queue "#{Config.prefix}queues.retry.#{appid}", exclusive: false, durable: true
     end
 
     def routing_key
-      "sophia.workerer.routing_keys.retry.#{appid}"
+      "#{Config.prefix}routing_keys.retry.#{appid}"
     end
   end
 end
