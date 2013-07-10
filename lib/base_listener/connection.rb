@@ -3,7 +3,7 @@ module BaseListener
     attr_reader :logger
 
     def initialize(logger = nil)
-      @logger = logger || Logger.new(self.class.name)
+      @logger = logger || Logger.new(self)
     end
 
     def channel
@@ -12,6 +12,10 @@ module BaseListener
 
     def exchange
       @exchange ||= channel.direct "#{Config.prefix}exchange", durable: true
+    end
+
+    def log_name
+      'BunnyConnection'
     end
 
     private
