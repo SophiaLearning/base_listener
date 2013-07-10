@@ -5,7 +5,9 @@ It's designed to use direct exchange
 ## Installation
 
 Add this line to your application's Gemfile:
-    gem "base_listener", git: 'git@github.com:SophiaLearning/base_listener.git'
+```ruby
+  gem "base_listener", git: 'git@github.com:SophiaLearning/base_listener.git'
+```
 
 And then execute:
 
