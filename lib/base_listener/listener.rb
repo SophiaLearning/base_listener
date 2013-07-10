@@ -1,11 +1,12 @@
 module BaseListener
   class Listener
     INTERFACE = %w(queue routing_key)
-    attr_reader :appid, :logger
+    attr_reader :appid, :logger, :connection
 
     def initialize(appid)
       @appid = appid
       @logger = Logger.new self
+      @connection = Connection.new @logger
       logger.info "Initialize new #{log_name} with appid = #{appid}"
     end
 
@@ -51,22 +52,14 @@ module BaseListener
       requeue(payload) unless yield
     end
 
+    #META interface
     INTERFACE.each do |name|
       define_method(name) { raise MustBeDefinedInChildClass }
     end
 
-    def connection
-      @connection ||= Bunny.new(Config.connection_params).start.tap do |c|
-        logger.info "New RabbitMQ connection initialized with host #{c.host}:#{c.port} and status #{c.status}"
-      end
-    end
-
-    def channel
-      @channel ||= connection.create_channel
-    end
-
-    def exchange
-      @exchange ||= channel.direct "#{Config.prefix}exchange", durable: true
+    #META def channel and def connection
+    %w(channel exchange).each do |name|
+      define_method(name) { connection.public_send name }
     end
 
     def handle_errors

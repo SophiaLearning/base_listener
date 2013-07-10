@@ -39,59 +39,16 @@ describe BaseListener::Listener do
       it 'logger' do
         listener.logger.should == logger
       end
+
+      it 'connection' do
+        listener.connection.should be_a(BaseListener::Connection)
+        listener.connection.logger.should == logger
+      end
     end
 
     it 'log info about initialization' do
       listener
       logger.infos.should include('Initialize new BaseListener::Listener with appid = test-appid')
-    end
-  end
-
-  describe '#connection' do
-    it 'initialize bunny with correct params' do
-      Bunny.should_receive(:new).with(BaseListener::Config.connection_params).and_return(connection)
-      listener.__send__ :connection
-    end
-
-    it 'starts connection' do
-      connection.should_receive(:start).and_return(connection)
-      listener.__send__ :connection
-    end
-
-    it 'writes connection to @connection' do
-      listener.__send__ :connection
-      listener.instance_variable_get('@connection').should == connection
-    end
-
-    it 'logs info about new connection' do
-      listener.__send__ :connection
-      logger.infos.should include(
-        "New RabbitMQ connection initialized with host #{connection.host}:#{connection.port} and status #{connection.status}"
-      )
-    end
-  end
-
-  describe '#channel' do
-    it 'creates new channel' do
-      connection.should_receive :create_channel
-      listener.__send__ :channel
-    end
-
-    it 'writes it to @channel' do
-      listener.__send__ :channel
-      listener.instance_variable_get('@channel').should == connection.create_channel
-    end
-  end
-
-  describe '#exchange' do
-    it 'creates direct exchange' do
-      listener.__send__(:channel).should_receive(:direct).with 'exchange', durable: true
-      listener.__send__ :exchange
-    end
-
-    it 'writes it to @exchange' do
-      listener.__send__ :exchange
-      listener.instance_variable_get('@exchange').should == connection.create_channel.direct
     end
   end
 
@@ -246,6 +203,20 @@ describe BaseListener::Listener do
       it 'requeue the error' do
         listener.should_receive(:requeue).with payload.merge(worker: 'ThatWorker')
       end
+    end
+  end
+
+  describe 'channel' do
+    it 'get channel from connection' do
+      listener.connection.should_receive :channel
+      listener.__send__ :channel
+    end
+  end
+
+  describe 'exchange' do
+    it 'get exchange from connection' do
+      listener.connection.should_receive :exchange
+      listener.__send__ :exchange
     end
   end
 end
