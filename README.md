@@ -5,8 +5,7 @@ It's designed to use direct exchange
 ## Installation
 
 Add this line to your application's Gemfile:
-
-    gem 'base_listener'
+    gem "base_listener", git: 'git@github.com:SophiaLearning/base_listener.git'
 
 And then execute:
 
@@ -32,7 +31,7 @@ There are several points which may be configured:
   BaseListener::Config.prefix = 'my.namespace.'
 
   #requeue_period in seconds, every the period RetryListener check retry queue, default - 10
-  BaseListener::Config.prefix = 10
+  BaseListener::Config.requeue_period = 10
 
   #handler, handler for exceptions, default = just resque
   BaseListener::Config.handler = Exceptional
