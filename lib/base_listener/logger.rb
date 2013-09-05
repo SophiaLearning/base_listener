@@ -13,8 +13,13 @@ module BaseListener
       Log4r::Logger.new(logged_object.log_name).tap do |logger|
         logger.outputters << Log4r::Outputter.stdout
         logger.outputters << rolling_file_outputter unless Config.log_path.nil?
+        logger.outputters << syslog_outputter
         logger.level     =  Log4r::DEBUG
       end
+    end
+
+    def syslog_outputter
+     Log4r::SyslogOutputter.new logged_object.log_name
     end
 
     def rolling_file_outputter

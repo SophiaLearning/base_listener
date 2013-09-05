@@ -1,6 +1,7 @@
 require 'singleton'
 require 'bunny'
 require 'log4r'
+require 'log4r/outputter/syslogoutputter'
 require 'pry'
 require "base_listener/version"
 require "base_listener/config"
