@@ -64,7 +64,7 @@ module BaseListener
 
     def handle_errors
       yield
-    rescue => e
+    rescue Exception => e
       logger.error e.message
       Config.handler.handle e, self.class.name
       false
