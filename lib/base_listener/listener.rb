@@ -11,8 +11,9 @@ module BaseListener
     end
 
     def subscribe!
-      queue.bind(exchange, routing_key: routing_key).subscribe(block: true) do |info, meta, payload|
+      queue.bind(exchange, routing_key: routing_key).subscribe(block: true, ack: true) do |info, meta, payload|
         perform info, meta, Marshal.load(payload)
+        channel.acknowledge(info.delivery_tag, false)
       end
     end
 
