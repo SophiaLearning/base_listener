@@ -1,7 +1,17 @@
 class MockQueue
-  attr_accessor :info, :meta, :payload
+  attr_writer   :info
+  attr_accessor :meta, :payload
+
   def bind(*args)
     self
+  end
+
+  def info
+    Object.new.tap do |info|
+      def info.delivery_tag
+        'the-delviery-tag'
+      end
+    end
   end
 
   def subscribe(*args)

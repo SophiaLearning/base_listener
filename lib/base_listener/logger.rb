@@ -7,6 +7,13 @@ module BaseListener
       @logger        = init_log4r
     end
 
+    #warn, error, info methods
+    %w(warn error info).each do |method_name|
+      define_method method_name do |message|
+        logger.public_send method_name, message
+      end
+    end
+
     private
 
     def init_log4r
@@ -28,13 +35,6 @@ module BaseListener
         maxsize: 1024*1024*5,
         filename: File.join(Config.log_path, "#{logged_object.log_name.underscore}.#{Process.pid}..log")
       )
-    end
-
-    #warn, error, info methods
-    %w(warn error info).each do |method_name|
-      define_method method_name do |message|
-        logger.public_send method_name, message
-      end
     end
   end
 end

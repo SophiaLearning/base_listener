@@ -8,4 +8,10 @@ class MockChannel
   def queue(*args)
     @queue ||= MockQueue.new
   end
+
+  def acknowledge(*args)
+    @acknowledges ||= []
+    @acknowledges << args
+    true
+  end
 end

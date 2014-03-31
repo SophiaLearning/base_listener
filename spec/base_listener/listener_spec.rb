@@ -158,7 +158,7 @@ describe BaseListener::Listener do
     end
 
     it 'subscribes to queue with correct params' do
-      queue.should_receive(:subscribe).with block: true
+      queue.should_receive(:subscribe).with block: true, ack: true
     end
 
     it 'infos about new message' do
